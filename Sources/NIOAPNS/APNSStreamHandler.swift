@@ -19,7 +19,7 @@ import NIO
 /// It checks for a good request to APNS Servers.
 final class APNSStreamHandler: ChannelDuplexHandler {
     typealias InboundIn = APNSResponse
-    typealias OutboundOut = APNSNotification
+    typealias OutboundOut = ByteBuffer
     typealias OutboundIn = APNSRequestContext
 
     var queue: [APNSRequestContext]
@@ -32,7 +32,7 @@ final class APNSStreamHandler: ChannelDuplexHandler {
         let res = unwrapInboundIn(data)
         guard let current = self.queue.popLast() else { return }
         guard res.header.status == .ok else {
-            if var data = res.data, let error = try? JSONDecoder().decode(APNSError.ResponseStruct.self, from: Data(data.readBytes(length: data.readableBytes) ?? [])) {
+            if var buffer = res.byteBuffer, let error = try? JSONDecoder().decode(APNSError.ResponseStruct.self, from: Data(buffer.readBytes(length: buffer.readableBytes) ?? [])) {
                 current.responsePromise.fail(APNSError.ResponseError.badRequest(error.reason))
             }
             return

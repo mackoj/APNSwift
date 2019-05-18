@@ -14,6 +14,7 @@
 
 import Foundation
 import CAPNSOpenSSL
+import NIO
 
 // Protocol for signing digests
 public protocol APNSSigner {
@@ -84,14 +85,16 @@ public struct APNSSigners {
 }
 
 extension APNSSigners.SigningMode {
-    public func sign(digest: Data) throws -> Data {
+    public func sign(_ digest: ByteBuffer) throws -> Data {
+        var copyDigest = digest
+        let dataDigest = Data(copyDigest.readBytes(length: copyDigest.readableBytes) ?? [])
         switch self {
         case .file(let filePath):
-            return try APNSSigners.FileSigner(url: URL(fileURLWithPath: filePath)).sign(digest: digest)
+            return try APNSSigners.FileSigner(url: URL(fileURLWithPath: filePath)).sign(digest: dataDigest)
         case .data(let data):
-            return try APNSSigners.DataSigner(data: data).sign(digest: digest)
+            return try APNSSigners.DataSigner(data: data).sign(digest: dataDigest)
         case .custom(let signer):
-            return try signer.sign(digest: digest)
+            return try signer.sign(digest: dataDigest)
         }
     }
 }
