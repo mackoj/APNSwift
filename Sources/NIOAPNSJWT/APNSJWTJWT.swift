@@ -63,7 +63,7 @@ public struct APNSJWT: Codable {
     /// Sign digest with SigningMode. Use the result in your request authorization header.
     public func getDigest() throws -> (digest: String, fixedDigest: ByteBuffer) {
         let digest = try self.digest()
-        var buffer = ByteBufferAllocator().buffer(capacity: digest.lengthOfBytes(using: .utf8))
+        var buffer = ByteBufferAllocator().buffer(capacity: digest.utf8.count)
         buffer.writeString(digest)
         return (digest: digest, fixedDigest: sha256(message: buffer))
     }
@@ -82,7 +82,7 @@ public struct APNSJWT: Codable {
             }
         }
         assert(res == 1, "SHA256_Final failed")
-
+        buffer.moveWriterIndex(forwardBy: Int(SHA256_DIGEST_LENGTH))
         return buffer
     }
 

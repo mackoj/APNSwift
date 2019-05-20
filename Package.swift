@@ -33,7 +33,8 @@ let package = Package(
                                                 "NIO",
                                                 "NIOSSL",
                                                 "NIOHTTP1",
-                                                "NIOHTTP2"]),
+                                                "NIOHTTP2",
+                                                "NIOFoundationCompat"]),
 
         .testTarget(name: "NIOAPNSTests", dependencies: ["NIOAPNS"]),
     ]
