@@ -48,8 +48,7 @@ internal final class APNSwiftBearerTokenFactory {
     static func makeNewBearerToken(configuration: APNSwiftConfiguration) throws -> String {
         let jwt = APNSwiftJWT(keyID: configuration.keyIdentifier, teamID: configuration.teamIdentifier, issueDate: Date())
         let digestValues = try jwt.getDigest()
-        var signature = try configuration.signer.sign(digest: digestValues.fixedDigest)
-        let data = signature.readData(length: signature.readableBytes)!
-        return digestValues.digest + "." + data.base64EncodedURLString()
+        let signature = try configuration.signer.sign(digest: digestValues.fixedDigest)
+        return digestValues.digest + "." + signature.base64EncodedURLString()
     }
 }

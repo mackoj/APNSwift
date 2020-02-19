@@ -15,6 +15,7 @@
 @_implementationOnly import CAPNSwiftBoringSSL
 import Foundation
 import NIO
+import Crypto
 
 public struct APNSwiftSigner {
     private let buffer: ByteBuffer
@@ -32,7 +33,7 @@ public struct APNSwiftSigner {
         self.buffer = mutableByteBuffer
     }
 
-    internal func sign(digest: ByteBuffer) throws -> ByteBuffer {
+    internal func sign(digest: SHA256Digest) throws -> Data {
         let bio = CAPNSwiftBoringSSL_BIO_new(CAPNSwiftBoringSSL_BIO_s_mem())
         defer { CAPNSwiftBoringSSL_BIO_free(bio) }
         let res = buffer.withUnsafeReadableBytes { ptr in
@@ -44,29 +45,34 @@ public struct APNSwiftSigner {
             throw APNSwiftError.SigningError.invalidAuthKey
         }
         defer { CAPNSwiftBoringSSL_EC_KEY_free(privateKeyPointer) }
+        
+        let privateKey = P256.Signing.PrivateKey()
+        let signature = try privateKey.signature(for: digest).rawRepresentation
+        return signature
+        
 
-        let sig = try digest.withUnsafeReadableBytes { ptr -> OpaquePointer in
-            guard let sig = CAPNSwiftBoringSSL_ECDSA_do_sign(ptr.baseAddress?.assumingMemoryBound(to: UInt8.self), ptr.count, privateKeyPointer) else {
-                throw APNSwiftError.SigningError.invalidSignatureData
-            }
-            return .init(sig)
-        }
-        defer { CAPNSwiftBoringSSL_ECDSA_SIG_free(.init(sig)) }
-
-        var rPtr: UnsafePointer<BIGNUM>?
-        var sPtr: UnsafePointer<BIGNUM>?
-        // as this method is `get0` there is no requirement to free those pointers: ECDSA_SIG will free them for us.
-        CAPNSwiftBoringSSL_ECDSA_SIG_get0(.init(sig), &rPtr, &sPtr)
-
-        var rb = [UInt8](repeating: 0, count: Int(CAPNSwiftBoringSSL_BN_num_bits(rPtr) + 7) / 8)
-        var sb = [UInt8](repeating: 0, count: Int(CAPNSwiftBoringSSL_BN_num_bits(sPtr) + 7) / 8)
-        let lenr = Int(CAPNSwiftBoringSSL_BN_bn2bin(rPtr, &rb))
-        let lens = Int(CAPNSwiftBoringSSL_BN_bn2bin(sPtr, &sb))
-
-        var signatureBytes = ByteBufferAllocator().buffer(capacity: lenr + lens)
-        let allZeroes = Array(repeating: UInt8(0), count: 32)
-        signatureBytes.writeBytes([allZeroes, rb].joined().suffix(32))
-        signatureBytes.writeBytes([allZeroes, sb].joined().suffix(32))
-        return signatureBytes
+//        let sig = try digest.withUnsafeReadableBytes { ptr -> OpaquePointer in
+//            guard let sig = CAPNSwiftBoringSSL_ECDSA_do_sign(ptr.baseAddress?.assumingMemoryBound(to: UInt8.self), ptr.count, privateKeyPointer) else {
+//                throw APNSwiftError.SigningError.invalidSignatureData
+//            }
+//            return .init(sig)
+//        }
+//        defer { CAPNSwiftBoringSSL_ECDSA_SIG_free(.init(sig)) }
+//
+//        var rPtr: UnsafePointer<BIGNUM>?
+//        var sPtr: UnsafePointer<BIGNUM>?
+//        // as this method is `get0` there is no requirement to free those pointers: ECDSA_SIG will free them for us.
+//        CAPNSwiftBoringSSL_ECDSA_SIG_get0(.init(sig), &rPtr, &sPtr)
+//
+//        var rb = [UInt8](repeating: 0, count: Int(CAPNSwiftBoringSSL_BN_num_bits(rPtr) + 7) / 8)
+//        var sb = [UInt8](repeating: 0, count: Int(CAPNSwiftBoringSSL_BN_num_bits(sPtr) + 7) / 8)
+//        let lenr = Int(CAPNSwiftBoringSSL_BN_bn2bin(rPtr, &rb))
+//        let lens = Int(CAPNSwiftBoringSSL_BN_bn2bin(sPtr, &sb))
+//
+//        var signatureBytes = ByteBufferAllocator().buffer(capacity: lenr + lens)
+//        let allZeroes = Array(repeating: UInt8(0), count: 32)
+//        signatureBytes.writeBytes([allZeroes, rb].joined().suffix(32))
+//        signatureBytes.writeBytes([allZeroes, sb].joined().suffix(32))
+//        return signatureBytes
     }
 }

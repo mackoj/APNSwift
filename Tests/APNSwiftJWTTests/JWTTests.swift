@@ -74,7 +74,7 @@ cc94a66VttRZgVg6jE/ju+2mdHP7JWLmcQ==
         
         let signer = try APNSwiftSigner(buffer: buffer)
         let sig = try signer.sign(digest: try jwt.getDigest().fixedDigest)
-        XCTAssertEqual(sig.readableBytes, 64) // len(r) + len(s) == 64 byte
+        XCTAssertEqual(sig.count, 64) // len(r) + len(s) == 64 byte
     }
     
     static var allTests = [

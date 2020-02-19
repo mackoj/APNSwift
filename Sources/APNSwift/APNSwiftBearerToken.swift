@@ -42,11 +42,8 @@ public struct APNSwiftBearerToken {
         let jwt = APNSwiftJWT(keyID: configuration.keyIdentifier, teamID: configuration.teamIdentifier, issueDate: Date())
         var token: String
         let digestValues = try jwt.getDigest()
-        var signature = try configuration.signer.sign(digest: digestValues.fixedDigest)
-        guard let data = signature.readData(length: signature.readableBytes) else {
-            throw APNSwiftError.SigningError.invalidSignatureData
-        }
-        token = digestValues.digest + "." + data.base64EncodedURLString()
+        let signature = try configuration.signer.sign(digest: digestValues.fixedDigest)
+        token = digestValues.digest + "." + signature.base64EncodedURLString()
         return token
     }
 }

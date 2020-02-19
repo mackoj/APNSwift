@@ -16,6 +16,7 @@ import Foundation
 import NIO
 import NIOHTTP1
 import NIOHTTP2
+import Crypto
 
 import XCTest
 @testable import APNSwift
@@ -187,10 +188,10 @@ final class APNSwiftRequestTests: XCTestCase {
         let aps = APNSwiftPayload(alert: alert, badge: 0, sound: .critical(apsSound), hasContentAvailable: true)
         let notification = BasicNotification( aps: aps)
         let data: Data = try! JSONEncoder().encode(notification)
-        var buffer = allocator.buffer(capacity: data.count)
-        buffer.writeBytes(data)
+        let digest = SHA256.hash(data: data)
         let error = APNSwiftError.SigningError.invalidAuthKey
-        XCTAssertThrowsError(try signer.sign(digest: buffer), String(error.localizedDescription))
+        
+        XCTAssertThrowsError(try signer.sign(digest: digest), String(error.localizedDescription))
 
     }
     func testErrorsFromAPNS() throws {
