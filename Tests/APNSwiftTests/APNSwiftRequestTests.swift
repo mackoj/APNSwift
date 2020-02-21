@@ -181,7 +181,7 @@ final class APNSwiftRequestTests: XCTestCase {
         let allocator = ByteBufferAllocator()
         var signerBuffer = allocator.buffer(capacity: invalidAuthKey.count)
         signerBuffer.writeString(invalidAuthKey)
-        let signer = try APNSwiftSigner.init(buffer: signerBuffer)
+        let signer = try APNSwiftSigner(keyIdentifier: "", key: .private(buffer: signerBuffer))
         let alert = APNSwiftPayload.APNSwiftAlert(title: "Hey There", subtitle: "Subtitle", body: "Body")
         let apsSound = APNSwiftPayload.APNSSoundDictionary(isCritical: true, name: "cow.wav", volume: 0.8)
         let aps = APNSwiftPayload(alert: alert, badge: 0, sound: .critical(apsSound), hasContentAvailable: true)
@@ -191,7 +191,6 @@ final class APNSwiftRequestTests: XCTestCase {
         buffer.writeBytes(data)
         let error = APNSwiftError.SigningError.invalidAuthKey
         XCTAssertThrowsError(try signer.sign(digest: buffer), String(error.localizedDescription))
-
     }
     func testErrorsFromAPNS() throws {
         let error = APNSwiftError.ResponseStruct(reason: .unregistered)
@@ -296,16 +295,7 @@ final class APNSwiftRequestTests: XCTestCase {
         bearerToken.cancel()
         
     }
-    static var allTests = [
-        ("testAlertEncoding", testAlertEncoding),
-        ("testMinimalAlertEncoding", testMinimalAlertEncoding),
-        ("testResponseDecoderBasics", testResponseDecoderBasics),
-        ("testResponseDecoderHappyWithReceivingTheBodyInMultipleChunks", testResponseDecoderHappyWithReceivingTheBodyInMultipleChunks),
-        ("testResponseDecoderAcceptsTrailers", testResponseDecoderAcceptsTrailers),
-        ("testInvalidAuthKey", testInvalidAuthKey),
-        ("testTokenProviderUpdate", testTokenProviderUpdate)
-        
-    ]
+
     let validAuthKey = """
     -----BEGIN PRIVATE KEY-----
     MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQg2sD+kukkA8GZUpmm

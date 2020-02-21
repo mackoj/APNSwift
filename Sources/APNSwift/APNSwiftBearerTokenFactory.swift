@@ -44,11 +44,12 @@ internal final class APNSwiftBearerTokenFactory {
     deinit {
         assert(self.cancelled, "APNSwiftBearerTokenFactory not closed on deinit. You must call APNSwiftBearerTokenFactory.close when you no longer need it to make sure the library can discard the resources")
     }
+
     static func makeNewBearerToken(configuration: APNSwiftConfiguration) throws -> String {
-        let jwt = APNSwiftJWT(keyID: configuration.keyIdentifier, teamID: configuration.teamIdentifier, issueDate: Date())
-        let digestValues = try jwt.getDigest()
-        var signature = try configuration.signer.sign(digest: digestValues.fixedDigest)
-        let data = signature.readData(length: signature.readableBytes)!
-        return digestValues.digest + "." + data.base64EncodedURLString()
+        let jwt = APNSwiftJWT(
+            teamID: configuration.teamIdentifier,
+            issueDate: Date()
+        )
+        return try configuration.signer.sign(jwt)
     }
 }

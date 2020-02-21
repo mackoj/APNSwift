@@ -19,13 +19,16 @@ import NIO
 import NIOSSL
 
 class APNSwiftConfigurationTests: XCTestCase {
-
     func configuration(environment: APNSwiftConfiguration.Environment) throws {
         var buffer = ByteBufferAllocator().buffer(capacity: appleECP8PrivateKey.count)
         buffer.writeString(appleECP8PrivateKey)
-        let signer = try APNSwiftSigner.init(buffer: buffer)
-
-        let apnsConfiguration = APNSwiftConfiguration(keyIdentifier: "MY_KEY_ID", teamIdentifier: "MY_TEAM_ID", signer: signer, topic: "MY_TOPIC", environment: environment)
+        let apnsConfiguration = try APNSwiftConfiguration(
+            keyIdentifier: "MY_KEY_ID",
+            teamIdentifier: "MY_TEAM_ID",
+            key: .private(buffer: buffer),
+            topic: "MY_TOPIC",
+            environment: environment
+        )
 
         switch environment {
         case .production:
@@ -51,21 +54,13 @@ class APNSwiftConfigurationTests: XCTestCase {
     func testSignature() throws {
         var buffer = ByteBufferAllocator().buffer(capacity: appleECP8PrivateKey.count)
         buffer.writeString(appleECP8PrivateKey)
-        let signer = try APNSwiftSigner.init(buffer: buffer)
-        let teamID = "8RX5AF8F6Z"
         let keyID = "9N8238KQ6Z"
+        let signer = try APNSwiftSigner(keyIdentifier: keyID, key: .private(buffer: buffer))
+        let teamID = "8RX5AF8F6Z"
         let date = Date()
-        let jwt = APNSwiftJWT(keyID: keyID, teamID: teamID, issueDate: date)
-        let digestValues = try jwt.getDigest()
-        let _ = try signer.sign(digest: digestValues.fixedDigest)
-
+        let jwt = APNSwiftJWT(teamID: teamID, issueDate: date)
+        let _ = try signer.sign(jwt)
     }
-
-    static var allTests = [
-        ("testSandboxConfiguration", testSandboxConfiguration),
-        ("testProductionConfiguration", testProductionConfiguration),
-        ("testSignature", testSignature),
-    ]
 
     let appleECP8PrivateKey = """
 -----BEGIN PRIVATE KEY-----
