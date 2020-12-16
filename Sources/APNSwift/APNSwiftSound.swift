@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-public struct APNSSoundDictionary: Encodable {
+public struct APNSSoundDictionary: Codable {
     public let critical: Int
     public let name: String
     public let volume: Double
@@ -42,7 +42,7 @@ public struct APNSSoundDictionary: Encodable {
  - Parameter string: use this for a normal alert sound
  - Parameter critical: use for a critical alert type
  */
-public enum APNSwiftSoundType: Encodable {
+public enum APNSwiftSoundType: Codable {
     case normal(String)
     case critical(APNSSoundDictionary)
 }
@@ -56,5 +56,31 @@ extension APNSwiftSoundType {
         case .critical(let dict):
             try container.encode(dict)
         }
+    }
+    public public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+    if let key = container.allKeys.first {
+      switch key {
+        case .normal:
+          let content = try container.decode(
+          String.self,
+          forKey: .normal
+        )
+        self = .normal(content)
+        case .critical:
+          let content = try container.decode(
+          String.self,
+          forKey: .critical
+        )
+        self = .critical(content)
+      }
+    } else {
+      throw DecodingError.dataCorrupted(
+        DecodingError.Context(
+          codingPath: container.codingPath,
+          debugDescription: "Unabled to decode enum."
+        )
+      )
+    }
     }
 }
