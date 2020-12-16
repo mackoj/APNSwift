@@ -1,5 +1,5 @@
 {
-	"name": "Swift 5.3.2",
+	"name": "Swift Latest",
 	"dockerFile": "Dockerfile",
 	"runArgs": [ "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined" ],
 	"settings": { 

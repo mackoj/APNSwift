@@ -1,4 +1,4 @@
-FROM swift:5.3.2
+FROM swift:latest
 
 ARG USERNAME=me
 ARG USER_UID=1000
